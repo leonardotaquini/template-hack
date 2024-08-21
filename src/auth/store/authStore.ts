@@ -1,12 +1,14 @@
 import { create } from 'zustand';
-import { User } from '../interfaces/user.interface';
+import { User, UserLogin, UserRegister } from '../interfaces/user.interface';
+import { AuthRequests } from '../api/AuthRequests';
 
 interface AuthStoreI {
     user: User | undefined;
     isLoading: boolean;
-    login: () => void;
+    token:string;
+    login: ( user: UserLogin ) => Promise<void>;
     logout: () => void;
-    register: () => void;
+    register: ( user: UserRegister ) => Promise<void>;
     checkAuth: () => void;
 
 }
@@ -14,8 +16,28 @@ interface AuthStoreI {
 export const useAuthStore = create<AuthStoreI>( (set) => ({
     user: undefined,
     isLoading: false,
-    register: () => set( (state) => ({ ...state, isLoading: true }) ),
-    login: () => {},
+    token: '',
+    register: async( user: UserRegister ) => {
+        try {
+            set({ isLoading: true });
+            const response = await AuthRequests.register( user );
+            set({ user: response.data.user, isLoading: false });
+        } catch (error) {
+            set({ isLoading: false });
+            console.error( error );
+        }
+
+    },
+    login: async( user: UserLogin ) => {
+        try {
+            set({ isLoading: true });
+            const response = await AuthRequests.login( user );
+            set({ user: response.user, isLoading: false });
+        } catch (error) {
+            set({ isLoading: false });
+            console.error( error );
+        }
+    },
     logout: () => {},
     checkAuth: () => {}
 
